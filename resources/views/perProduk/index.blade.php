@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', 'Simple Inventory')
+@section('title', 'Inventory Card')
 
 @section('content')
 <section class="section">
     <div class="section-header d-flex justify-content-between">
-        <h1>Halaman Simple Inventory</h1>
+        <h1>Halaman Kartu Bahan Baku</h1>
         <div class="d-flex">
             <select id="bulan" class="form-control mr-2">
                 <option value="">Pilih Bulan</option>
@@ -27,7 +27,7 @@
             <div class="col-lg-12">
                 <div class="card shadow">
                     <div class="card-header bg-primary d-flex justify-content-between align-items-center">
-                        <h3 class="text-light">Tabel Simple Inventory</h3>
+                        <h3 class="text-light">Tabel Kartu Bahan Baku</h3>
                     </div>
                     <div class="card-body">
                         <table class="table table-bordered table-md" id="table-menu">

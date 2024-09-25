@@ -184,6 +184,27 @@ class StokKeluarController extends Controller
             ->with('success', 'Bahan Baku Keluar berhasil diperbarui.');
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $stokKeluar = StokKeluar::findOrFail($id);
+        $jumlahLama = $stokKeluar->jumlah;
+        $bahanBakuId = $stokKeluar->bahan_baku_id;
+        $this->restoreInventory($bahanBakuId, $jumlahLama);
+        $stokKeluar->delete();
+        if ($stokKeluar) {
+            return response()->json([
+                'status' => 'success'
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error'
+            ]);
+        }
+    }
+
 
     private function restoreInventory($bahanBakuId, $jumlah)
     {
@@ -249,22 +270,4 @@ class StokKeluarController extends Controller
         $inventory->save();
     }
 
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $stokKeluar = StokKeluar::findOrFail($id);
-        $stokKeluar->delete();
-        if ($stokKeluar) {
-            return response()->json([
-                'status' => 'success'
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error'
-            ]);
-        }
-    }
 }

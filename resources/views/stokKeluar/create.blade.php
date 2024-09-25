@@ -202,8 +202,17 @@ Tambah Stok Keluar
             $("#satuanBahanBaku").text(satuan);
         });
 
+        let isSubmitting = false;
+
         $("#pembelianForm").submit(function (e) {
             e.preventDefault();
+
+            if (isSubmitting) return; // Prevent further submits
+            isSubmitting = true; // Set flag to true
+
+            // Disable the submit button to prevent multiple submits
+            var $submitButton = $(this).find('button[type="submit"]');
+            $submitButton.prop('disabled', true);
 
             // Serialize form data
             var formData = $(this).serialize();
@@ -237,6 +246,10 @@ Tambah Stok Keluar
                 },
                 error: function (xhr, status, error) {
                     handleAjaxError(xhr);
+                },
+                complete: function () {
+                    isSubmitting = false; // Allow submits again
+                    $submitButton.prop('disabled', false);
                 }
             });
         });

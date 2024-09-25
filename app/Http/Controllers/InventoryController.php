@@ -67,6 +67,7 @@ class InventoryController extends Controller
                 ->addColumn('action', function ($row) use ($bulan, $tahun) {
                     // Tambahkan query parameter bulan dan tahun ke URL detail
                     return '<a class="btn btn-warning mr-1" href="' . route('inventory.show', ['id' => $row->bahanBaku->id, 'bulan' => $bulan, 'tahun' => $tahun]) . '">Show</a>';
+                    return '<a class="btn btn-warning mr-1" href="' . route('inventory.show', ['id' => $row->bahanBaku->id, 'bulan' => $bulan, 'tahun' => $tahun]) . '">Show</a>';
                 })
                 ->make(true);
         }
@@ -181,6 +182,7 @@ class InventoryController extends Controller
         $stokMasuk = DB::table('stok_masuk')
             ->where('bahan_baku_id', $id)
             ->whereBetween('tanggal_masuk', [$startDate, $endDate])
+            ->select('tanggal_masuk as tanggal', 'qty as masuk')
             ->select('tanggal_masuk as tanggal', 'qty as masuk')
             ->get();
 
