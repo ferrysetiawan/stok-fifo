@@ -66,7 +66,7 @@ class InventoryController extends Controller
                 })
                 ->addColumn('action', function ($row) use ($bulan, $tahun) {
                     // Tambahkan query parameter bulan dan tahun ke URL detail
-                    return '<a class="btn btn-warning mr-1" href="' . route('inventory.show', ['id' => $row->id, 'bulan' => $bulan, 'tahun' => $tahun]) . '">Show</a>';
+                    return '<a class="btn btn-warning mr-1" href="' . route('inventory.show', ['id' => $row->bahanBaku->id, 'bulan' => $bulan, 'tahun' => $tahun]) . '">Show</a>';
                 })
                 ->make(true);
         }
@@ -80,7 +80,7 @@ class InventoryController extends Controller
     public function show($id, Request $request)
     {
         // Cari inventory yang sesuai
-        $inventory = Inventory::findOrFail($id);
+        $inventory = Inventory::where('bahan_baku_id', $id)->first();
         $bulan = $request->input('bulan', now()->month);
         $tahun = $request->input('tahun', now()->year);
 
@@ -95,14 +95,19 @@ class InventoryController extends Controller
             ->whereMonth('bulan', $bulan)
             ->first();
 
-        // Jika tidak ditemukan stok awal bulan, set ke 0
-        $stokAwalBulan = $stokAwalBulanRecord ? $stokAwalBulanRecord->stok_awal_bulan : 0;
+       // Jika stok awal bulan tidak ditemukan, ambil stok awal dari tabel inventory
+        if ($stokAwalBulanRecord) {
+            $stokAwalBulan = $stokAwalBulanRecord->stok_awal_bulan;
+        } else {
+            // Jika tidak ada di monthly_stock_histories, ambil dari inventory
+            $stokAwalBulan = $inventory->stok_awal_bulan; // pastikan kolom ini benar
+        }
 
         // Ambil stok masuk dalam rentang waktu yang dipilih
         $stokMasuk = DB::table('stok_masuk')
             ->where('bahan_baku_id', $id)
             ->whereBetween('tanggal_masuk', [$startDate, $endDate])
-            ->select('tanggal_masuk as tanggal', 'jumlah as masuk')
+            ->select('tanggal_masuk as tanggal', 'qty as masuk')
             ->get();
 
         // Ambil stok keluar dalam rentang waktu yang dipilih

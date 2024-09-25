@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Validation\ValidationException;
 
 class StockOpnameController extends Controller
 {
@@ -42,22 +43,129 @@ class StockOpnameController extends Controller
 
     public function create()
     {
-        $bahanBakus = Inventory::paginate(1);
-        return view('stockOpname.create', compact('bahanBakus'));
+        return view('stockOpname.create');
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'opnames' => 'required|array',
-            'opnames.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
-            'opnames.*.stok_fisik' => 'required|integer|min:0',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'tanggal_opname' => 'required',
+                'bahan_baku_id' => 'required',
+                'stok_fisik' => 'required'
 
-        // Mengirimkan data ke job queue
-        Queue::push(new ProcessStockOpname($request->opnames));
+            ], [
+                'required' => ':attribute harus diisi',
+                'unique' => ':attribute sudah digunakan',
+                'min' => ':attribute minimal :min karakter',
+                'max' => ':attribute maksimal :max karakter',
+                'numeric' => ':attribute harus berupa angka',
+            ], [
+                'bahan_baku_id' => 'Bahan Baku',
+            ]);
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        }
 
-        return redirect()->route('stockOpname.create')->with('success', 'Stock Opname berhasil dikirim untuk diproses.');
+        $tanggalOpname = Carbon::parse($validatedData['tanggal_opname']);
+        $startOfMonth = $tanggalOpname->copy()->startOfMonth();
+        $endOfMonth = $tanggalOpname->copy()->endOfMonth();
+
+        DB::transaction(function () use ($validatedData, $startOfMonth, $endOfMonth) {
+            $inventory  = Inventory::where('bahan_baku_id', $validatedData['bahan_baku_id'])->first();
+            $stokAwal = $inventory->stok_awal_bulan;
+            $penerimaan = StokMasuk::where('bahan_baku_id', $validatedData['bahan_baku_id'])
+                    ->whereBetween('tanggal_masuk', [$startOfMonth, $endOfMonth])
+                    ->sum('qty');
+
+            $pengeluaran = StokKeluar::where('bahan_baku_id', $validatedData['bahan_baku_id'])
+                    ->whereBetween('tanggal_keluar', [$startOfMonth, $endOfMonth])
+                    ->sum('jumlah');
+
+            $stokAkhir = $stokAwal + $penerimaan - $pengeluaran;
+            $stokFisik = $validatedData['stok_fisik'];
+            $selisih = $stokFisik - $stokAkhir;
+
+            StockOpname::create([
+                'bahan_baku_id' => $validatedData['bahan_baku_id'],
+                'stok_awal' => $stokAwal,
+                'penerimaan' => $penerimaan,
+                'pengeluaran' => $pengeluaran,
+                'stok_akhir' => $stokAkhir,
+                'stok_fisik' => $stokFisik,
+                'selisih' => $selisih,
+                'tanggal_opname' => $validatedData['tanggal_opname'],
+            ]);
+
+            if ($selisih < 0) {
+                $jumlahKeluar = abs($selisih);
+                $bahanBakuId = $validatedData['bahan_baku_id'];
+
+                $bahanBakuMasuks = StokMasuk::where('bahan_baku_id', $bahanBakuId)
+                    ->where('jumlah', '>', 0)
+                    ->orderBy('tanggal_masuk', 'asc')
+                    ->get();
+
+                foreach ($bahanBakuMasuks as $bahanBakuMasuk) {
+                    if ($jumlahKeluar <= 0) {
+                        break;
+                    }
+
+                    if ($bahanBakuMasuk->jumlah >= $jumlahKeluar) {
+                        $bahanBakuMasuk->jumlah -= $jumlahKeluar;
+                        $bahanBakuMasuk->save();
+
+                        // Simpan data ke dalam database
+                        $pengeluaran = StokKeluar::create([
+                            'tanggal_keluar' => $validatedData['tanggal_opname'],
+                            'bahan_baku_id' => $validatedData['bahan_baku_id'],
+                            'jumlah' => abs($selisih),
+                        ]);
+
+                        $jumlahKeluar = 0;
+                    } else {
+                        $jumlahKeluar -= $bahanBakuMasuk->jumlah;
+
+                        // Simpan data ke dalam database
+                        $pengeluaran = StokKeluar::create([
+                            'tanggal_keluar' => $validatedData['tanggal_opname'],
+                            'bahan_baku_id' => $validatedData['bahan_baku_id'],
+                            'jumlah' => abs($selisih),
+                        ]);
+
+                        $bahanBakuMasuk->jumlah = 0;
+                        $bahanBakuMasuk->save();
+                    }
+                }
+
+                if ($jumlahKeluar > 0) {
+                    return redirect()->back()->with('error', 'Stok tidak mencukupi.');
+                }
+
+                // Perbarui stok di inventory
+                $inventory = Inventory::where('bahan_baku_id', $bahanBakuId)->first();
+                $inventory->stok = $inventory->bahanBakuMasuks->sum('jumlah');
+                $inventory->save();
+
+            } elseif ($selisih > 0) {
+                StokMasuk::create([
+                    'bahan_baku_id' => $validatedData['bahan_baku_id'],
+                    'jumlah' => $selisih,
+                    'qty' => $selisih,
+                    'tanggal_masuk' => $validatedData['tanggal_opname'],
+                ]);
+
+                $inventory = Inventory::firstOrCreate(
+                    ['bahan_baku_id' => $validatedData['bahan_baku_id']],
+                    ['stok' => 0],
+                );
+                $inventory->stok += $selisih;
+                $inventory->save();
+
+            }
+        });
+
+        return redirect()->route('stockOpname.index')->with('success', 'Stock Opname berhasil ditambahkan.');
     }
 
     public function edit($id)
