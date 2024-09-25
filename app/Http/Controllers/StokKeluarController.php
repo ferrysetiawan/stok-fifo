@@ -190,9 +190,9 @@ class StokKeluarController extends Controller
     public function destroy(string $id)
     {
         $stokKeluar = StokKeluar::findOrFail($id);
-        $jumlahLama = $stokKeluar->jumlah;
-        $bahanBakuId = $stokKeluar->bahan_baku_id;
-        $this->restoreInventory($bahanBakuId, $jumlahLama);
+        // $jumlahLama = $stokKeluar->jumlah;
+        // $bahanBakuId = $stokKeluar->bahan_baku_id;
+        // $this->restoreInventory($bahanBakuId, $jumlahLama);
         $stokKeluar->delete();
         if ($stokKeluar) {
             return response()->json([
