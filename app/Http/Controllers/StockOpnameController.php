@@ -24,6 +24,7 @@ class StockOpnameController extends Controller
             $currentMonth = $request->bulan ?: now()->month;
             $currentYear = $request->tahun ?: now()->year;
             $query->whereMonth('tanggal_opname', $currentMonth)->whereYear('tanggal_opname', $currentYear);
+            $query->orderBy('created_at', 'desc');
 
             $data = $query->get();
             return datatables()->of($data)
