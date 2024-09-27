@@ -24,6 +24,12 @@ class StokMasukController extends Controller
 
             // Filter by month and year
             $query->whereMonth('tanggal_masuk', $currentMonth)->whereYear('tanggal_masuk', $currentYear);
+            // Filter berdasarkan nama bahan baku
+            if ($request->nama_bahan_baku) {
+                $query->whereHas('bahanBaku', function ($q) use ($request) {
+                    $q->where('bahan_baku', 'like', '%' . $request->nama_bahan_baku . '%');
+                });
+            }
             $data = $query->get();
             return datatables()->of($data)
                 ->addColumn('bahan_baku', function ($row) {

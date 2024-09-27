@@ -22,7 +22,17 @@ class StokKeluarController extends Controller
 
             $currentMonth = $request->bulan ?: now()->month;
             $currentYear = $request->tahun ?: now()->year;
-            $query->whereMonth('tanggal_keluar', $currentMonth)->whereYear('tanggal_keluar', $currentYear);
+
+            // Filter berdasarkan bulan dan tahun
+            $query->whereMonth('tanggal_keluar', $currentMonth)
+                ->whereYear('tanggal_keluar', $currentYear);
+
+            // Filter berdasarkan nama bahan baku
+            if ($request->nama_bahan_baku) {
+                $query->whereHas('bahanBaku', function ($q) use ($request) {
+                    $q->where('bahan_baku', 'like', '%' . $request->nama_bahan_baku . '%');
+                });
+            }
 
             $data = $query->get();
             return datatables()->of($data)
@@ -31,8 +41,10 @@ class StokKeluarController extends Controller
                 })
                 ->make(true);
         }
+
         return view('stokKeluar.index');
     }
+
 
     /**
      * Show the form for creating a new resource.

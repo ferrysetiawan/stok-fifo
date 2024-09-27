@@ -14,6 +14,7 @@
     <div class="section-header d-flex justify-content-between">
         <h1>Halaman Stok Masuk</h1>
         <div class="d-flex">
+            <input type="text" id="nama_bahan_baku" class="form-control mr-2" placeholder="Nama Bahan Baku">
             <select id="bulan" class="form-control mr-2">
                 <option value="">Pilih Bulan</option>
                 @for ($i = 1; $i <= 12; $i++)
@@ -78,7 +79,7 @@
                 // processing: true,
                 serverSide: true,
                 responsive: true,
-                searching: true,
+                searching: false,
                 paging: true,
                 info: false,
                 ordering: false,
@@ -87,6 +88,7 @@
                     data: function (d) {
                         d.bulan = $('#bulan').val();
                         d.tahun = $('#tahun').val();
+                        d.nama_bahan_baku = $('#nama_bahan_baku').val();
                     }
                 },
                 columns: [
