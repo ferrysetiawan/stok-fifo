@@ -111,7 +111,6 @@ class InventoryController extends Controller
             ->where('bahan_baku_id', $id)
             ->whereBetween('tanggal_masuk', [$startDate, $endDate])
             ->select('tanggal_masuk as tanggal', 'qty as masuk')
-            ->select('tanggal_masuk as tanggal', 'qty as masuk')
             ->get();
 
         // Ambil stok keluar dalam rentang waktu yang dipilih
