@@ -40,6 +40,8 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('/inventory-history/export-pdf', [InventoryHistoryController::class, 'exportPDF'])->name('inventory.export-pdf');
 
     Route::post('/inventory/update-stok-akhir-bulan', [InventoryController::class, 'updateStokAkhirBulan'])->name('inventory.update-stok-akhir-bulan');
+    Route::get('/inventory/download-all-pdf', [InventoryController::class, 'downloadAllPdf'])->name('inventory.downloadAllPdf');
+
 
 
     Route::resource('stok_keluar', StokKeluarController::class);

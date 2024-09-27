@@ -20,6 +20,8 @@
                 @endfor
             </select>
             <button id="filterButton" class="btn btn-success px-4">Filter</button>
+            <a id="cetakKartuButton" href="{{ route('inventory.downloadAllPdf', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn btn-primary ml-2">Cetak Kartu</a>
+
         </div>
     </div>
     <div class="section-body">
@@ -77,8 +79,30 @@
             ],
         });
 
+         // Fungsi untuk update URL di tombol cetak PDF
+          // Fungsi untuk update URL di tombol cetak PDF
+        function updateCetakKartuUrl() {
+            var bulan = $('#bulan').val();
+            var tahun = $('#tahun').val();
+
+            if (bulan && tahun) {
+                // Buat URL dengan format yang benar (tanpa :bulan dan :tahun)
+                var newUrl = "{{ route('inventory.downloadAllPdf') }}?bulan=" + bulan + "&tahun=" + tahun;
+
+                // Set href baru di tombol cetak kartu
+                $('#cetakKartuButton').attr('href', newUrl);
+            }
+        }
+
+        // Update tabel dan URL tombol cetak saat tombol filter diklik
         $('#filterButton').on('click', function () {
-            table.draw();
+            table.draw(); // Update DataTables berdasarkan filter
+            updateCetakKartuUrl(); // Update href tombol cetak PDF
+        });
+
+        // Update href tombol cetak PDF saat bulan atau tahun diubah
+        $('#bulan, #tahun').on('change', function () {
+            updateCetakKartuUrl(); // Setiap kali bulan/tahun berubah, perbarui href
         });
     });
 </script>

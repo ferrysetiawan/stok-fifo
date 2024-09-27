@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inventory;
+use App\Models\StokKeluar;
+use App\Models\StokMasuk;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -76,80 +78,6 @@ class InventoryController extends Controller
         return view('perProduk.index', compact('bulan', 'tahun'));
     }
 
-
-
-    // public function show($id, Request $request)
-    // {
-    //     // Cari inventory yang sesuai
-    //     $inventory = Inventory::findOrFail($id);
-    //     $bulan = $request->input('bulan', now()->month);
-    //     $tahun = $request->input('tahun', now()->year);
-
-    //     // Tentukan awal dan akhir bulan yang dipilih
-    //     $startDate = Carbon::create($tahun, $bulan)->startOfMonth();
-    //     $endDate = Carbon::create($tahun, $bulan)->endOfMonth();
-
-    //     // Ambil stok awal bulan dari tabel monthly_stock_histories berdasarkan bulan dan tahun yang difilter
-    //     $stokAwalBulanRecord = DB::table('monthly_stock_histories')
-    //         ->where('bahan_baku_id', $inventory->bahan_baku_id)
-    //         ->whereYear('bulan', $tahun)
-    //         ->whereMonth('bulan', $bulan)
-    //         ->first();
-
-    //     // Jika tidak ditemukan stok awal bulan, set ke 0
-    //     $stokAwalBulan = $stokAwalBulanRecord ? $stokAwalBulanRecord->stok_awal_bulan : 0;
-
-    //     // Ambil stok masuk dalam rentang waktu yang dipilih
-    //     $stokMasuk = DB::table('stok_masuk')
-    //         ->where('bahan_baku_id', $id)
-    //         ->whereBetween('tanggal_masuk', [$startDate, $endDate])
-    //         ->select('tanggal_masuk as tanggal', 'jumlah as masuk')
-    //         ->get();
-
-    //     // Ambil stok keluar dalam rentang waktu yang dipilih
-    //     $stokKeluar = DB::table('stok_keluar')
-    //         ->where('bahan_baku_id', $id)
-    //         ->whereBetween('tanggal_keluar', [$startDate, $endDate])
-    //         ->select('tanggal_keluar as tanggal', 'jumlah as keluar')
-    //         ->get();
-
-    //     // Gabungkan stok masuk dan keluar berdasarkan tanggal yang sama
-    //     $stokGabungan = $stokMasuk->concat($stokKeluar)
-    //         ->groupBy('tanggal')
-    //         ->map(function ($item, $key) {
-    //             $masuk = $item->whereNotNull('masuk')->sum('masuk');
-    //             $keluar = $item->whereNotNull('keluar')->sum('keluar');
-    //             return [
-    //                 'tanggal' => $key,
-    //                 'masuk' => $masuk,
-    //                 'keluar' => $keluar,
-    //             ];
-    //         })->sortBy('tanggal');
-
-    //     // Inisialisasi sisa stok dengan stok awal bulan
-    //     $sisaStok = $stokAwalBulan;
-    //     $dailyStok = [];
-
-    //     // Hitung sisa stok untuk setiap tanggal berdasarkan stok masuk dan keluar
-    //     foreach ($stokGabungan as $stok) {
-    //         $sisaStok = $sisaStok + $stok['masuk'] - $stok['keluar'];
-    //         $dailyStok[] = [
-    //             'tanggal' => $stok['tanggal'],
-    //             'masuk' => $stok['masuk'],
-    //             'keluar' => $stok['keluar'],
-    //             'sisa_stok' => $sisaStok
-    //         ];
-    //     }
-
-    //     // Tampilkan data pada view
-    //     return view('perProduk.show', [
-    //         'inventory' => $inventory,
-    //         'dailyStok' => $dailyStok,
-    //         'stokAwalBulan' => $stokAwalBulan,
-    //         'bulan' => $bulan,
-    //         'tahun' => $tahun
-    //     ]);
-    // }
 
     public function show($id, Request $request)
     {
@@ -310,5 +238,93 @@ class InventoryController extends Controller
         Inventory::updateStokAwalBulan();
         return redirect()->route('inventory.index')
             ->with('success', 'Stok awal bulan berhasil diperbarui.');
+    }
+
+    public function downloadAllPdf(Request $request)
+    {
+        // Ambil bulan dan tahun dari request, jika tidak ada set ke bulan dan tahun saat ini
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+
+        // Tentukan awal dan akhir bulan berdasarkan bulan dan tahun yang dipilih
+        $startDate = Carbon::create($tahun, $bulan)->startOfMonth(); // Tanggal 1 bulan yang dipilih
+        $endDate = Carbon::create($tahun, $bulan)->endOfMonth();     // Tanggal akhir bulan yang dipilih
+
+        // Ambil semua inventory (stok) beserta bahan bakunya
+        $inventories = Inventory::with('bahanBaku')->get();
+
+        // Inisialisasi array untuk menampung data stok dari semua bahan baku
+        $allStockData = [];
+
+        foreach ($inventories as $inventory) {
+            // Ambil stok awal bulan dari tabel monthly_stock_histories
+            $stokAwalBulanRecord = DB::table('monthly_stock_histories')
+                ->where('bahan_baku_id', $inventory->bahan_baku_id)
+                ->whereYear('bulan', $tahun)
+                ->whereMonth('bulan', $bulan)
+                ->first();
+
+            // Jika stok awal tidak ditemukan, ambil stok awal dari tabel inventory
+            $stokAwalBulan = $stokAwalBulanRecord ? $stokAwalBulanRecord->stok_awal_bulan : $inventory->stok_awal_bulan;
+
+            // Ambil stok masuk berdasarkan rentang waktu yang difilter
+            $stokMasuk = StokMasuk::where('bahan_baku_id', $inventory->bahan_baku_id)
+                ->whereBetween('tanggal_masuk', [$startDate, $endDate]) // Pastikan filter berdasarkan tanggal dari awal hingga akhir bulan
+                ->get();
+
+            // Ambil stok keluar berdasarkan rentang waktu yang difilter
+            $stokKeluar = StokKeluar::where('bahan_baku_id', $inventory->bahan_baku_id)
+                ->whereBetween('tanggal_keluar', [$startDate, $endDate]) // Filter berdasarkan tanggal dari awal hingga akhir bulan
+                ->get();
+
+            // Gabungkan stok masuk dan keluar berdasarkan tanggal
+            $stokGabungan = $stokMasuk->concat($stokKeluar)
+                ->groupBy(function ($item) {
+                    // Gabungkan berdasarkan tanggal (misal: 'tanggal_masuk' atau 'tanggal_keluar')
+                    return $item->tanggal_masuk ?? $item->tanggal_keluar;
+                })
+                ->map(function ($item, $key) {
+                    // Menghitung total masuk dan keluar per tanggal
+                    $masuk = $item->whereNotNull('qty')->sum('qty');   // Pastikan menggunakan 'qty' untuk stok masuk
+                    $keluar = $item->whereNotNull('jumlah')->sum('jumlah'); // 'jumlah' untuk stok keluar
+                    return [
+                        'tanggal' => $key,
+                        'masuk' => $masuk,
+                        'keluar' => $keluar,
+                    ];
+                })->sortBy('tanggal');
+
+            // Hitung sisa stok awal
+            $sisaStok = $stokAwalBulan;
+            $dailyStok = [];
+
+            // Hitung sisa stok harian
+            foreach ($stokGabungan as $stok) {
+                $sisaStok = $sisaStok + $stok['masuk'] - $stok['keluar'];
+                $dailyStok[] = [
+                    'tanggal' => $stok['tanggal'],
+                    'masuk' => $stok['masuk'],
+                    'keluar' => $stok['keluar'],
+                    'sisa_stok' => $sisaStok
+                ];
+            }
+
+            // Simpan data stok harian untuk setiap bahan baku
+            $allStockData[] = [
+                'inventory' => $inventory,
+                'dailyStok' => $dailyStok,
+                'stokAwalBulan' => $stokAwalBulan,
+            ];
+        }
+
+        // Muat view PDF dengan semua data stok
+        $pdf = PDF::loadView('perProduk.pdf', [
+            'allStockData' => $allStockData,
+            'bulan' => $bulan,
+            'tahun' => $tahun
+        ]);
+
+        // Kembalikan file PDF untuk diunduh
+        return $pdf->download('kartu_stok_semua_bahan_baku.pdf');
     }
 }
