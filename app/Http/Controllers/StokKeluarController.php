@@ -94,6 +94,18 @@ class StokKeluarController extends Controller
         $jumlahKeluar = $validatedData['jumlah'];
         $bahanBakuId = $validatedData['bahanBaku'];
 
+        // Dapatkan stok total dari StokMasuk
+        $totalStokTersedia = StokMasuk::where('bahan_baku_id', $bahanBakuId)
+            ->where('jumlah', '>', 0)
+            ->sum('jumlah'); // Menghitung total stok yang tersedia
+
+        // Cek apakah stok mencukupi
+        if ($jumlahKeluar > $totalStokTersedia) {
+            // Jika stok tidak cukup, kembalikan pesan error
+            return response()->json(['error' => 'Stok tidak mencukupi.'], 422);
+        }
+
+        // Lanjutkan jika stok mencukupi
         $bahanBakuMasuks = StokMasuk::where('bahan_baku_id', $bahanBakuId)
             ->where('jumlah', '>', 0)
             ->orderBy('tanggal_masuk', 'asc')
@@ -105,35 +117,24 @@ class StokKeluarController extends Controller
             }
 
             if ($bahanBakuMasuk->jumlah >= $jumlahKeluar) {
+                // Kurangi jumlah di stok masuk
                 $bahanBakuMasuk->jumlah -= $jumlahKeluar;
                 $bahanBakuMasuk->save();
-
-                // Simpan data ke dalam database
-                $pengeluaran = StokKeluar::create([
-                    'tanggal_keluar' => $validatedData['tanggal_keluar'],
-                    'bahan_baku_id' => $validatedData['bahanBaku'],
-                    'jumlah' => $validatedData['jumlah'],
-                ]);
-
                 $jumlahKeluar = 0;
             } else {
+                // Kurangi jumlah stok keluar dan set stok masuk ke 0
                 $jumlahKeluar -= $bahanBakuMasuk->jumlah;
-
-                // Simpan data ke dalam database
-                $pengeluaran = StokKeluar::create([
-                    'tanggal_keluar' => $validatedData['tanggal_keluar'],
-                    'bahan_baku_id' => $validatedData['bahanBaku'],
-                    'jumlah' => $validatedData['jumlah'],
-                ]);
-
                 $bahanBakuMasuk->jumlah = 0;
                 $bahanBakuMasuk->save();
             }
         }
 
-        if ($jumlahKeluar > 0) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi.');
-        }
+        // Simpan hanya sekali di StokKeluar setelah semua stok dikurangi
+        $pengeluaran = StokKeluar::create([
+            'tanggal_keluar' => $validatedData['tanggal_keluar'],
+            'bahan_baku_id' => $validatedData['bahanBaku'],
+            'jumlah' => $validatedData['jumlah'],
+        ]);
 
         // Perbarui stok di inventory
         $inventory = Inventory::where('bahan_baku_id', $bahanBakuId)->first();
@@ -142,6 +143,7 @@ class StokKeluarController extends Controller
 
         return response()->json(['message' => 'Stok berhasil disimpan', 'data' => $pengeluaran]);
     }
+
 
     /**
      * Display the specified resource.
@@ -281,5 +283,4 @@ class StokKeluarController extends Controller
         $inventory->stok = StokMasuk::where('bahan_baku_id', $bahanBakuId)->sum('jumlah');
         $inventory->save();
     }
-
 }

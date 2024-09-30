@@ -107,46 +107,43 @@ class StockOpnameController extends Controller
                     ->orderBy('tanggal_masuk', 'asc')
                     ->get();
 
+                $totalKeluar = $jumlahKeluar; // Catat total jumlah yang keluar
+
                 foreach ($bahanBakuMasuks as $bahanBakuMasuk) {
                     if ($jumlahKeluar <= 0) {
                         break;
                     }
 
                     if ($bahanBakuMasuk->jumlah >= $jumlahKeluar) {
+                        // Kurangi jumlah di stok masuk
                         $bahanBakuMasuk->jumlah -= $jumlahKeluar;
                         $bahanBakuMasuk->save();
-
-                        // Simpan data ke dalam database
-                        $pengeluaran = StokKeluar::create([
-                            'tanggal_keluar' => $validatedData['tanggal_opname'],
-                            'bahan_baku_id' => $validatedData['bahan_baku_id'],
-                            'jumlah' => abs($selisih),
-                        ]);
-
                         $jumlahKeluar = 0;
                     } else {
+                        // Kurangi jumlah stok keluar dan set stok masuk ke 0
                         $jumlahKeluar -= $bahanBakuMasuk->jumlah;
-
-                        // Simpan data ke dalam database
-                        $pengeluaran = StokKeluar::create([
-                            'tanggal_keluar' => $validatedData['tanggal_opname'],
-                            'bahan_baku_id' => $validatedData['bahan_baku_id'],
-                            'jumlah' => abs($selisih),
-                        ]);
-
                         $bahanBakuMasuk->jumlah = 0;
                         $bahanBakuMasuk->save();
                     }
                 }
 
-                if ($jumlahKeluar > 0) {
-                    return redirect()->back()->with('error', 'Stok tidak mencukupi.');
-                }
+                // Cek apakah stok mencukupi
+                // if ($jumlahKeluar > 0) {
+                //     return redirect()->back()->with('error', 'Stok tidak mencukupi.');
+                // }
+
+                // Simpan hanya sekali di StokKeluar setelah semua stok dikurangi
+                $pengeluaran = StokKeluar::create([
+                    'tanggal_keluar' => $validatedData['tanggal_opname'],
+                    'bahan_baku_id' => $validatedData['bahan_baku_id'],
+                    'jumlah' => abs($selisih), // Ini jumlah total yang keluar
+                ]);
 
                 // Perbarui stok di inventory
                 $inventory = Inventory::where('bahan_baku_id', $bahanBakuId)->first();
                 $inventory->stok = $inventory->bahanBakuMasuks->sum('jumlah');
                 $inventory->save();
+
 
             } elseif ($selisih > 0) {
                 StokMasuk::create([
