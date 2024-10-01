@@ -28,6 +28,7 @@
                 @endfor
             </select>
             <button id="filterButton" class="btn btn-success px-4">Filter</button>
+            <button id="downloadButton" class="btn btn-info px-4 ml-2">Download</button>
         </div>
     </div>
     <div class="section-body">
@@ -109,6 +110,16 @@
                         }
                     }
                 ]
+            });
+
+            $('#downloadButton').click(function () {
+                var bulan = $('#bulan').val();
+                var tahun = $('#tahun').val();
+                var start_date = tahun + '-' + bulan + '-01';
+                var end_date = tahun + '-' + bulan + '-' + new Date(tahun, bulan, 0).getDate(); // Mendapatkan jumlah hari dalam bulan
+
+                // Redirect untuk download
+                window.location.href = "{{ route('stok_keluar.export') }}?start_date=" + start_date + "&end_date=" + end_date;
             });
         });
 

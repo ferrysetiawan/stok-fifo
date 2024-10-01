@@ -24,6 +24,7 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::post('/import', [BahanBakuController::class, 'import'])->name('import');
 
     Route::resource('stok_masuk', StokMasukController::class);
+    Route::get('/stok-masuk/export', [StokMasukController::class, 'exportExcel'])->name('stok_masuk.export');
     Route::post('bahan/store', [StokMasukController::class, 'bahanBakuStore'])->name('bahan.store');
     // ajax bahan baku search
     Route::get('/stok/bahanbaku', [StokMasukController::class, 'bahanBaku'])->name('stok_masuk.bahanbaku');
@@ -45,6 +46,7 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
 
 
     Route::resource('stok_keluar', StokKeluarController::class);
+    Route::get('/stok-keluar/export', [StokKeluarController::class, 'exportExcel'])->name('stok_keluar.export');
 
     Route::get('stock-opname', [StockOpnameController::class, 'index'])->name('stockOpname.index');
     Route::get('stock-opname/create', [StockOpnameController::class, 'create'])->name('stockOpname.create');
