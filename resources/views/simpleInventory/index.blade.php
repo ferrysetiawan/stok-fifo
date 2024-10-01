@@ -22,7 +22,7 @@
                 <button type="submit" class="btn btn-primary">Update Stok Awal Bulan</button>
             </form>
         @endif
-        <a href="{{ route('inventory.simple-export-pdf') }}" class="btn btn-danger">Export PDF</a> <!-- Tombol Export PDF -->   
+         <!-- Tombol Export PDF -->
     </div>
     <div class="section-body">
         <div class="row my-5">
@@ -30,6 +30,7 @@
                 <div class="card shadow">
                     <div class="card-header bg-primary d-flex justify-content-between align-items-center">
                         <h3 class="text-light">Tabel Simple Inventory</h3>
+                        <a href="{{ route('inventory.simple-export-pdf') }}" class="btn btn-danger">Export PDF</a>
                     </div>
                     <div class="">
                         <div class="card-body">
