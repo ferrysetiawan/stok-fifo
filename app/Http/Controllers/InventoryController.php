@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SimpleInventoryExport;
 use App\Models\Inventory;
 use App\Models\StokKeluar;
 use App\Models\StokMasuk;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
 class InventoryController extends Controller
@@ -171,6 +173,11 @@ class InventoryController extends Controller
 
         // Download file PDF
         return $pdf->download('simple-inventory.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new SimpleInventoryExport, 'simple-inventory.xlsx');
     }
 
     public function indexs(Request $request, $category_id = null)

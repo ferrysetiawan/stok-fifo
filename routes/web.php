@@ -33,6 +33,7 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('/per-produk', [InventoryController::class, 'perProduk'])->name('inventory.perProduk');
     Route::get('/per-produk/{id}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/simple-inventory/export-pdf', [InventoryController::class, 'exportSimpleInventoryPDF'])->name('inventory.simple-export-pdf');
+    Route::get('/simple-inventory/export-excel', [InventoryController::class, 'exportExcel'])->name('inventory.simple-export-excel');
     Route::get('detail_inventory/{category_id?}', [InventoryController::class, 'indexs'])->name('detail_inventory.index');
 
     Route::post('inventory/update-stok-awal-bulan', [InventoryController::class, 'updateStokAwalBulan'])->name('inventory.update-stok-awal-bulan');

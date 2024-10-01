@@ -30,7 +30,10 @@
                 <div class="card shadow">
                     <div class="card-header bg-primary d-flex justify-content-between align-items-center">
                         <h3 class="text-light">Tabel Simple Inventory</h3>
-                        <a href="{{ route('inventory.simple-export-pdf') }}" class="btn btn-danger">Export PDF</a>
+                        <span>
+                            <a href="{{ route('inventory.simple-export-pdf') }}" class="btn btn-danger">Export PDF</a>
+                            <a href="{{ route('inventory.simple-export-excel') }}" class="btn btn-warning">Export Excel</a>
+                        </span>
                     </div>
                     <div class="">
                         <div class="card-body">
