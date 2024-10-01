@@ -16,7 +16,7 @@ class InventoryController extends Controller
     {
         $today = Carbon::now();
         // dd($today);
-        $isStartOfMonth = $today->day === 4;
+        $isStartOfMonth = $today->day === 1;
         if ($request->ajax()) {
             $data = Inventory::with('bahanBaku')
                 ->get();
