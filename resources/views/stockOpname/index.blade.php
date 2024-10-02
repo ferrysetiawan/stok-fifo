@@ -52,7 +52,7 @@
                                         <th>Jumlah Akhir</th>
                                         <th>Stok Fisik</th>
                                         <th>Selisih</th>
-                                        <th>Aksi</th>
+                                        <th>Tanggal</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -106,10 +106,7 @@
                     { data: 'stok_fisik', name: 'stok_fisik' },
                     { data: 'selisih', name: 'selisih' },
                     {
-                        data: null,
-                        render: function (data) {
-                            return '<a class="btn btn-warning mr-1" data-toggle="tooltip" data-placement="bottom" title="ubah" href="{{ url('stock-opname') }}/' + data.id + '/edit"><i class="fas fa-pencil-alt"></i></a>';
-                        }
+                       data: 'tanggal_opname', name: 'tanggal_opname',
                     }
                 ]
             });
