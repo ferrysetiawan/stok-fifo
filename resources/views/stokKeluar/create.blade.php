@@ -148,31 +148,48 @@ Tambah Stok Keluar
 
         // Function to handle AJAX errors
         function handleAjaxError(xhr) {
-                if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors || xhr.responseJSON.error;
+            if (xhr.status === 422) {
+                var errors = xhr.responseJSON.errors || xhr.responseJSON.error;
 
-                    // Jika error berhubungan dengan stok tidak mencukupi
-                    if (typeof errors === 'string' && errors === 'Stok tidak mencukupi.') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal!',
-                            text: 'Stok tidak mencukupi. Silakan periksa stok yang tersedia.',
-                            showConfirmButton: true
-                        });
-                    } else {
-                        // Jika error validasi form lainnya
-                        for (var key in errors) {
-                            if (errors.hasOwnProperty(key)) {
-                                var errorMessage = errors[key][0];
-                                $('#' + key).addClass('is-invalid');
-                                $('#' + key).after('<div class="invalid-feedback">' + errorMessage + '</div>');
+                // Jika error adalah string (contohnya: 'Stok tidak mencukupi.')
+                if (typeof errors === 'string') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal!',
+                        text: errors, // Menampilkan pesan error yang dikirim oleh server
+                        showConfirmButton: true
+                    });
+                } else if (typeof errors === 'object') {
+                    // Jika error adalah object (validasi form)
+                    // Bersihkan pesan error lama
+                    $('.invalid-feedback').remove();
+                    $('.is-invalid').removeClass('is-invalid');
+
+                    for (var key in errors) {
+                        if (errors.hasOwnProperty(key)) {
+                            var errorMessage = errors[key][0];
+                            var inputField = $('#' + key);
+
+                            // Tandai input dengan is-invalid dan tambahkan pesan invalid-feedback
+                            inputField.addClass('is-invalid');
+                            if (inputField.next('.invalid-feedback').length === 0) {
+                                inputField.after('<div class="invalid-feedback">' + errorMessage + '</div>');
                             }
                         }
                     }
-                } else {
-                    console.error(xhr.responseText); // Untuk menangani error lain
                 }
+            } else {
+                // Tangani error selain 422
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan!',
+                    text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+                    showConfirmButton: true
+                });
+                console.error(xhr.responseText); // Menangani error lain
+            }
         }
+
 
         $("#bahanBaku").select2({
             ajax: {
