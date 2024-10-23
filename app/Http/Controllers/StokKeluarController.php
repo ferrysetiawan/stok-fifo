@@ -95,8 +95,9 @@ class StokKeluarController extends Controller
 
         $jumlahKeluar = $validatedData['jumlah'];
         $bahanBakuId = $validatedData['bahanBaku'];
+        $tanggalKeluar = $validatedData['tanggal_keluar'];
 
-        // Dapatkan stok total dari StokMasuk
+        // Dapatkan stok total dari StokMasuk yang sesuai dengan tanggal
         $totalStokTersedia = StokMasuk::where('bahan_baku_id', $bahanBakuId)
             ->where('jumlah', '>', 0)
             ->sum('jumlah'); // Menghitung total stok yang tersedia
@@ -107,12 +108,21 @@ class StokKeluarController extends Controller
             return response()->json(['error' => 'Stok tidak mencukupi.'], 422);
         }
 
-        // Lanjutkan jika stok mencukupi
+        // Ambil stok masuk yang tersedia dengan urutan berdasarkan tanggal_masuk
         $bahanBakuMasuks = StokMasuk::where('bahan_baku_id', $bahanBakuId)
             ->where('jumlah', '>', 0)
             ->orderBy('tanggal_masuk', 'asc')
             ->get();
 
+        // Cek apakah ada stok masuk yang lebih baru dari tanggal keluar
+        foreach ($bahanBakuMasuks as $bahanBakuMasuk) {
+            if ($bahanBakuMasuk->tanggal_masuk > $tanggalKeluar) {
+                // Jika ada stok masuk yang tanggalnya lebih besar dari tanggal keluar
+                return response()->json(['error' => 'Stok keluar tidak bisa dilakukan karena stok masuk di tanggal yang lebih baru.'], 422);
+            }
+        }
+
+        // Lanjutkan proses jika tidak ada masalah dengan tanggal
         foreach ($bahanBakuMasuks as $bahanBakuMasuk) {
             if ($jumlahKeluar <= 0) {
                 break;
@@ -147,6 +157,7 @@ class StokKeluarController extends Controller
     }
 
 
+
     /**
      * Display the specified resource.
      */
@@ -177,20 +188,27 @@ class StokKeluarController extends Controller
         $jumlahBaru = $request->jumlah;
         $jumlahLama = $bahanBakuKeluar->jumlah;
         $bahanBakuId = $bahanBakuKeluar->bahan_baku_id;
+        $tanggalKeluar = $bahanBakuKeluar->tanggal_keluar;
 
         if ($jumlahBaru == $jumlahLama) {
             return redirect()->route('stok_keluar.index')
                 ->with('info', 'Tidak ada perubahan pada jumlah.');
         }
 
-        // Mengembalikan stok lama ke inventory
+        // Kembalikan stok lama ke inventory
         $this->restoreInventory($bahanBakuId, $jumlahLama);
 
+        // Cek apakah stok cukup untuk jumlah baru sebelum menguranginya
+        if (!$this->checkAvailableStock($bahanBakuId, $jumlahBaru, $tanggalKeluar)) {
+            return redirect()->back()->with('error', 'Stok tidak mencukupi atau tidak sesuai dengan tanggal stok masuk.');
+        }
+
         // Mengurangi stok baru dari inventory
-        if (!$this->reduceInventory($bahanBakuId, $jumlahBaru)) {
+        if (!$this->reduceInventory($bahanBakuId, $jumlahBaru, $tanggalKeluar)) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi.');
         }
 
+        // Update jumlah stok keluar
         $bahanBakuKeluar->update(['jumlah' => $jumlahBaru]);
 
         // Perbarui stok di inventory
@@ -225,7 +243,6 @@ class StokKeluarController extends Controller
     private function restoreInventory($bahanBakuId, $jumlah)
     {
         $bahanBakuMasuks = StokMasuk::where('bahan_baku_id', $bahanBakuId)
-            ->where('jumlah', '>', 0)
             ->orderBy('tanggal_masuk', 'asc')
             ->get();
 
@@ -234,12 +251,13 @@ class StokKeluarController extends Controller
                 break;
             }
 
-            $remainingSpace = $bahanBakuMasuk->jumlah;
+            $availableSpace = $bahanBakuMasuk->jumlah_asli - $bahanBakuMasuk->jumlah;
 
-            if ($remainingSpace > 0) {
-                $bahanBakuMasuk->jumlah += $jumlah;
+            if ($availableSpace > 0) {
+                $restoreAmount = min($availableSpace, $jumlah);
+                $bahanBakuMasuk->jumlah += $restoreAmount;
                 $bahanBakuMasuk->save();
-                $jumlah = 0;
+                $jumlah -= $restoreAmount;
             }
         }
 
@@ -248,9 +266,11 @@ class StokKeluarController extends Controller
 
 
 
-    private function reduceInventory($bahanBakuId, $jumlah)
+
+    private function reduceInventory($bahanBakuId, $jumlah, $tanggalKeluar)
     {
         $bahanBakuMasuks = StokMasuk::where('bahan_baku_id', $bahanBakuId)
+            ->where('tanggal_masuk', '<=', $tanggalKeluar) // Hanya stok masuk sebelum atau sama dengan tanggal keluar
             ->where('jumlah', '>', 0)
             ->orderBy('tanggal_masuk', 'asc')
             ->get();
@@ -278,6 +298,15 @@ class StokKeluarController extends Controller
         return true;
     }
 
+    private function checkAvailableStock($bahanBakuId, $jumlah, $tanggalKeluar)
+    {
+        $totalStokTersedia = StokMasuk::where('bahan_baku_id', $bahanBakuId)
+            ->where('tanggal_masuk', '<=', $tanggalKeluar) // Hanya stok masuk sebelum atau sama dengan tanggal keluar
+            ->where('jumlah', '>', 0)
+            ->sum('jumlah');
+
+        return $jumlah <= $totalStokTersedia;
+    }
 
     private function updateInventory($bahanBakuId)
     {
@@ -286,12 +315,17 @@ class StokKeluarController extends Controller
         $inventory->save();
     }
 
+
     public function exportExcel(Request $request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $month = $request->input('start_date');
+        $year = $request->input('end_date');
 
-        return Excel::download(new StokKeluarExport($startDate, $endDate), 'stok_keluar.xlsx');
+        // dd($month, $year);
+
+        $fileName = 'stok_keluar_' . $month . '_' . $year . '_' . now()->format('His') . '.xlsx';
+
+        return Excel::download(new StokKeluarExport($month, $year), $fileName);
     }
 
 }

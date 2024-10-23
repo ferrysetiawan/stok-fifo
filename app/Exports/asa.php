@@ -96,7 +96,7 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
     }
 
     /**
-     * Styling untuk worksheet (misalnya untuk heading tanggal).
+     * Styling untuk worksheet (misalnya untuk heading tanggal dan header kolom).
      *
      * @param Worksheet $sheet
      * @return array
@@ -104,7 +104,7 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
     public function styles(Worksheet $sheet)
     {
         $styles = [];
-        $currentRow = 1; // Start from row 1
+        $currentRow = 1; // Mulai dari baris 1
 
         // Atur lebar kolom
         $sheet->getColumnDimension('A')->setWidth(5);  // Kolom No
@@ -118,64 +118,66 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
         $sheet->getColumnDimension('I')->setWidth(15); // Kolom Total
 
         foreach ($this->stockReports as $date => $stokItems) {
-            // Add date heading in each date group
-            $sheet->setCellValue("A{$currentRow}", $date); // Date in column A
-            $sheet->mergeCells("A{$currentRow}:I{$currentRow}"); // Merge from column A to I
+            // Tambahkan heading tanggal di setiap kelompok tanggal
+            $sheet->setCellValue("A{$currentRow}", $date); // Tanggal di kolom A
+            $sheet->mergeCells("A{$currentRow}:I{$currentRow}"); // Gabungkan dari kolom A sampai I
             $styles[$currentRow] = [
                 'font' => ['bold' => true, 'size' => 14],
-                'alignment' => ['horizontal' => 'center'], // Center alignment
+                'alignment' => ['horizontal' => 'center'], // Rata tengah
             ];
 
-            $currentRow++; // Move to the next row for the items
+            $currentRow++; // Pindah ke row berikutnya untuk header barang
 
-             // Tambahkan header kolom
-             $sheet->setCellValue("A{$currentRow}", 'No');
-             $sheet->mergeCells("A{$currentRow}:A" . ($currentRow + 1));
-             $sheet->setCellValue("B{$currentRow}", 'Nama Barang');
-             $sheet->mergeCells("B{$currentRow}:B" . ($currentRow + 1));
-             $sheet->setCellValue("C{$currentRow}", 'Unit');
-             $sheet->mergeCells("C{$currentRow}:C" . ($currentRow + 1));
-             $sheet->setCellValue("D{$currentRow}", 'Qty');
-             $sheet->mergeCells("D{$currentRow}:D" . ($currentRow + 1));
-             $sheet->setCellValue("E{$currentRow}", 'Harga Satuan');
-             $sheet->mergeCells("E{$currentRow}:E" . ($currentRow + 1));
-             $sheet->mergeCells("F{$currentRow}:H{$currentRow}"); // Merge kolom Dapur, Bar, Operasional
-             $sheet->setCellValue("F{$currentRow}", 'Total Harga Berdasarkan Kategori');
-             $sheet->setCellValue("F" . ($currentRow + 1), 'Dapur');
-             $sheet->setCellValue("G" . ($currentRow + 1), 'Bar');
-             $sheet->setCellValue("H" . ($currentRow + 1), 'Operasional');
-             $sheet->mergeCells("I{$currentRow}:I" . ($currentRow + 1));
-             $sheet->setCellValue("I{$currentRow}", 'Total');
+            // Tambahkan header kolom
+            $sheet->setCellValue("A{$currentRow}", 'No');
+            $sheet->mergeCells("A{$currentRow}:A" . ($currentRow + 1));
+            $sheet->setCellValue("B{$currentRow}", 'Nama Barang');
+            $sheet->mergeCells("B{$currentRow}:B" . ($currentRow + 1));
+            $sheet->setCellValue("C{$currentRow}", 'Unit');
+            $sheet->mergeCells("C{$currentRow}:C" . ($currentRow + 1));
+            $sheet->setCellValue("D{$currentRow}", 'Qty');
+            $sheet->mergeCells("D{$currentRow}:D" . ($currentRow + 1));
+            $sheet->setCellValue("E{$currentRow}", 'Harga Satuan');
+            $sheet->mergeCells("E{$currentRow}:E" . ($currentRow + 1));
+            $sheet->mergeCells("F{$currentRow}:H{$currentRow}"); // Merge kolom Dapur, Bar, Operasional
+            $sheet->setCellValue("F{$currentRow}", 'Total Harga Berdasarkan Kategori');
+            $sheet->setCellValue("F" . ($currentRow + 1), 'Dapur');
+            $sheet->setCellValue("G" . ($currentRow + 1), 'Bar');
+            $sheet->setCellValue("H" . ($currentRow + 1), 'Operasional');
+            $sheet->mergeCells("I{$currentRow}:I" . ($currentRow + 1));
+            $sheet->setCellValue("I{$currentRow}", 'Total');
 
-             // Tambahkan style untuk header kolom
-             $sheet->getStyle("A{$currentRow}:I" . ($currentRow + 1))->applyFromArray([
-                 'font' => ['bold' => true],
-                 'alignment' => ['horizontal' => 'center', 'vertical' => 'center'], // Rata tengah secara horizontal dan vertikal
-                 'fill' => [
-                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                     'startColor' => ['argb' => 'FFFF00'], // Warna background kuning
-                 ],
-                 'borders' => [
-                     'allBorders' => [
-                         'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                     ],
-                 ],
-             ]);
+            // Tambahkan style untuk header kolom
+            $sheet->getStyle("A{$currentRow}:I" . ($currentRow + 1))->applyFromArray([
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center', 'vertical' => 'center'], // Rata tengah secara horizontal dan vertikal
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFFF00'], // Warna background kuning
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    ],
+                ],
+            ]);
 
-             $currentRow += 2;
+            $currentRow += 2; // Pindah ke row berikutnya untuk data barang, setelah header selesai (increment dengan 2)
 
-            // Initialize subtotals
             $subtotalDapur = 0;
             $subtotalBar = 0;
             $subtotalOperasional = 0;
             $subtotalTotal = 0;
 
-            // Iterate through stock items for each date
+            // Iterasi data barang untuk setiap tanggal
             foreach ($stokItems as $stokKeluar) {
+                // Map data barang ke Excel
+                $sheet->fromArray($this->map($stokKeluar), null, "A{$currentRow}");
+
+                // Update subtotal berdasarkan kategori
                 $totalHarga = $stokKeluar->jumlah * $stokKeluar->bahanBaku->harga;
                 $kategori = $stokKeluar->bahanBaku->kategori->nama;
 
-                // Accumulate subtotals
                 if ($kategori === 'Dapur') {
                     $subtotalDapur += $totalHarga;
                 } elseif ($kategori === 'Bar') {
@@ -186,17 +188,7 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
 
                 $subtotalTotal += $totalHarga;
 
-                // Output item data in the Excel sheet
-                $sheet->setCellValue("A{$currentRow}", $stokKeluar->id);  // NO
-                $sheet->setCellValue("B{$currentRow}", $stokKeluar->bahanBaku->bahan_baku);  // NAMA BARANG
-                $sheet->setCellValue("C{$currentRow}", $stokKeluar->bahanBaku->satuan);  // UNIT
-                $sheet->setCellValue("D{$currentRow}", $stokKeluar->jumlah);  // QTY
-                $sheet->setCellValue("E{$currentRow}", $stokKeluar->bahanBaku->harga);  // HARGA SATUAN
-                $sheet->setCellValue("F{$currentRow}", $kategori === 'Dapur' ? $totalHarga : 0);  // DAPUR
-                $sheet->setCellValue("G{$currentRow}", $kategori === 'Bar' ? $totalHarga : 0);  // BAR
-                $sheet->setCellValue("H{$currentRow}", $kategori === 'Operasional' ? $totalHarga : 0);  // OPERASIONAL
-                $sheet->setCellValue("I{$currentRow}", $totalHarga);  // TOTAL
-
+                // Tambahkan border untuk setiap baris data
                 $styles[$currentRow] = [
                     'borders' => [
                         'allBorders' => [
@@ -205,24 +197,29 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
                     ],
                 ];
 
-                $currentRow++; // Move to the next row for the next item
+                $currentRow++; // Baris untuk setiap data barang
             }
 
-            // Add subtotal row
+            // Tambahkan baris subtotal
             $sheet->setCellValue("A{$currentRow}", 'Subtotal');
-            $sheet->mergeCells("A{$currentRow}:E{$currentRow}"); // Merge from A to E for 'Subtotal'
+            $sheet->mergeCells("A{$currentRow}:E{$currentRow}"); // Gabungkan dari kolom A ke E untuk 'Subtotal'
             $sheet->setCellValue("F{$currentRow}", $subtotalDapur);
             $sheet->setCellValue("G{$currentRow}", $subtotalBar);
             $sheet->setCellValue("H{$currentRow}", $subtotalOperasional);
             $sheet->setCellValue("I{$currentRow}", $subtotalTotal);
 
-            // Style for subtotal
+            // Style untuk subtotal
             $styles[$currentRow] = [
                 'font' => ['bold' => true],
-                'alignment' => ['horizontal' => 'right'], // Subtotal right-aligned
+                'alignment' => ['horizontal' => 'right'], // Subtotal rata kanan
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    ],
+                ],
             ];
 
-            $currentRow++; // Add an empty row after subtotal
+            $currentRow++; // Tambahkan satu baris kosong setelah subtotal
         }
 
         return $styles;
