@@ -226,80 +226,13 @@ class StokMasukController extends Controller
 
     public function exportExcel(Request $request)
     {
-        // Ambil data stok masuk berdasarkan rentang tanggal
-        $stokMasuk = StokMasuk::with('bahanBaku')
-            ->whereBetween('tanggal_masuk', [$request->start_date, $request->end_date])
-            ->orderBy('tanggal_masuk') // Urutkan berdasarkan tanggal
-            ->get();
+        $month = $request->input('start_date');
+        $year = $request->input('end_date');
 
-        // Kelompokkan data berdasarkan tanggal_masuk
-        $groupedData = $stokMasuk->groupBy('tanggal_masuk');
+        // dd($month, $year);
 
-        // Untuk menyimpan data untuk ekspor
-        $exportData = [];
+        $fileName = 'stok_masuk_' . $month . '_' . $year . '_' . now()->format('His') . '.xlsx';
 
-        // Proses setiap kelompok data
-        foreach ($groupedData as $tanggal => $items) {
-            $totalAmount = 0; // Hanya untuk total harga
-
-            // Tambahkan header untuk tanggal dengan teks "Tanggal:"
-            $exportData[] = [
-                'no' => '', // Kosong
-                'nama_barang' => 'Tanggal: ' . $tanggal, // Tanggal sebagai judul dengan label "Tanggal: "
-                'unit' => '',
-                'qty' => '',
-                'harga_satuan' => '',
-                'total' => ''
-            ];
-
-            // Tambahkan header kolom
-            $exportData[] = [
-                'no' => 'NO',
-                'nama_barang' => 'NAMA BARANG',
-                'unit' => 'UNIT',
-                'qty' => 'QTY',
-                'harga_satuan' => 'HARGA SATUAN',
-                'total' => 'TOTAL'
-            ];
-
-            // Proses setiap item dalam tanggal tersebut
-            foreach ($items as $index => $item) {
-                $amount = $item->qty * $item->bahanBaku->harga; // Hitung total harga untuk setiap item
-                $totalAmount += $amount; // Menjumlahkan total harga
-
-                // Tambahkan data item ke dalam array ekspor
-                $exportData[] = [
-                    'no' => $index + 1, // Nomor urut
-                    'nama_barang' => $item->bahanBaku->bahan_baku,
-                    'unit' => $item->bahanBaku->satuan,
-                    'qty' => $item->qty,
-                    'harga_satuan' => $item->bahanBaku->harga,
-                    'total' => $amount
-                ];
-            }
-
-            // Tambahkan subtotal untuk tanggal tersebut
-            $exportData[] = [
-                'no' => '', // Kosong
-                'nama_barang' => 'Jumlah', // Label jumlah
-                'unit' => '',
-                'qty' => '',
-                'harga_satuan' => '',
-                'total' => $totalAmount
-            ];
-
-            // Tambahkan baris kosong sebagai pemisah antar tanggal
-            $exportData[] = [
-                'no' => '',
-                'nama_barang' => '',
-                'unit' => '',
-                'qty' => '',
-                'harga_satuan' => '',
-                'total' => ''
-            ];
-        }
-
-        // Menggunakan Maatwebsite Excel untuk ekspor
-        return Excel::download(new StokMasukExport($exportData), 'stok_masuk.xlsx');
+        return Excel::download(new StokMasukExport($month, $year), $fileName);
     }
 }
