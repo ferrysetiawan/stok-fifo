@@ -323,7 +323,7 @@ class StokKeluarController extends Controller
         $month = $request->input('start_date');
         $year = $request->input('end_date');
 
-        // dd($month, $year);
+        //dd($month, $year);
 
         $fileName = 'stok_keluar_' . $month . '_' . $year . '_' . now()->format('His') . '.xlsx';
 

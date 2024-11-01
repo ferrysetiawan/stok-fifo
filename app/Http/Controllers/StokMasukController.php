@@ -229,7 +229,7 @@ class StokMasukController extends Controller
         $month = $request->input('start_date');
         $year = $request->input('end_date');
 
-        // dd($month, $year);
+        //dd($month, $year);
 
         $fileName = 'stok_masuk_' . $month . '_' . $year . '_' . now()->format('His') . '.xlsx';
 

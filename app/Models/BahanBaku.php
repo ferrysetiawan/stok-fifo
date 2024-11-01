@@ -21,8 +21,8 @@ class BahanBaku extends Model
         return $this->belongsTo(Kategori::class, 'kategori_id');
     }
 
-    public function stokMasuk()
-    {
-        return $this->hasMany(StokMasuk::class);
-    }
+    // public function stokMasuk()
+    // {
+    //     return $this->hasMany(StokMasuk::class);
+    // }
 }

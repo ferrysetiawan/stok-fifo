@@ -26,13 +26,15 @@ class StokMasukExport implements FromCollection, WithHeadings, WithMapping, With
 
         // Ambil data stok keluar berdasarkan bulan dan tahun
         $this->stockReports = StokMasuk::with('bahanBaku.kategori')
-            ->whereMonth('tanggal_masuk', $this->month)
-            ->whereYear('tanggal_masuk', $this->year)
+             ->whereMonth('tanggal_masuk', $this->month)
+             ->whereYear('tanggal_masuk', $this->year)
             ->orderBy('tanggal_masuk')
             ->get()
             ->groupBy(function ($item) {
                 return Carbon::parse($item->tanggal_masuk)->format('d F Y'); // Mengelompokkan berdasarkan tanggal
             });
+
+            dd($this->stockReports, $this->month, $this->year);
     }
 
     /**
@@ -56,16 +58,16 @@ class StokMasukExport implements FromCollection, WithHeadings, WithMapping, With
     /**
      * Mapping data stok keluar ke dalam format Excel.
      *
-     * @param mixed $stokKeluar
+     * @param mixed $stokMasuk
      * @return array
      */
-    public function map($stokKeluar): array
+    public function map($stokMasuk): array
     {
         // Hitung total harga (jumlah * harga satuan)
-        $totalHarga = $stokKeluar->qty * $stokKeluar->bahanBaku->harga;
+        $totalHarga = $stokMasuk->qty * $stokMasuk->bahanBaku->harga;
 
         // Tentukan kolom yang akan diisi berdasarkan kategori bahan baku
-        $kategori = $stokKeluar->bahanBaku->kategori->nama;
+        $kategori = $stokMasuk->bahanBaku->kategori->nama;
 
         // Default semua kolom ke 0
         $dapur = 0;
@@ -83,11 +85,11 @@ class StokMasukExport implements FromCollection, WithHeadings, WithMapping, With
 
         // Return data format Excel
         return [
-            $stokKeluar->id,  // NO
-            $stokKeluar->bahanBaku->bahan_baku,  // NAMA BARANG
-            $stokKeluar->bahanBaku->satuan,  // UNIT
-            $stokKeluar->qty,  // QTY
-            $stokKeluar->bahanBaku->harga,  // HARGA SATUAN
+            $stokMasuk->id,  // NO
+            $stokMasuk->bahanBaku->bahan_baku,  // NAMA BARANG
+            $stokMasuk->bahanBaku->satuan,  // UNIT
+            $stokMasuk->qty,  // QTY
+            $stokMasuk->bahanBaku->harga,  // HARGA SATUAN
             $dapur,  // Kolom DAPUR
             $bar,  // Kolom BAR
             $operasional,  // Kolom OPERASIONAL
@@ -171,9 +173,9 @@ class StokMasukExport implements FromCollection, WithHeadings, WithMapping, With
             $subtotalTotal = 0;
 
             // Iterate through stock items for each date
-            foreach ($stokItems as $stokKeluar) {
-                $totalHarga = $stokKeluar->qty * $stokKeluar->bahanBaku->harga;
-                $kategori = $stokKeluar->bahanBaku->kategori->nama;
+            foreach ($stokItems as $stokMasuk) {
+                $totalHarga = $stokMasuk->qty * $stokMasuk->bahanBaku->harga;
+                $kategori = $stokMasuk->bahanBaku->kategori->nama;
 
                 // Accumulate subtotals
                 if ($kategori === 'Dapur') {
@@ -187,11 +189,11 @@ class StokMasukExport implements FromCollection, WithHeadings, WithMapping, With
                 $subtotalTotal += $totalHarga;
 
                 // Output item data in the Excel sheet
-                $sheet->setCellValue("A{$currentRow}", $stokKeluar->id);  // NO
-                $sheet->setCellValue("B{$currentRow}", $stokKeluar->bahanBaku->bahan_baku);  // NAMA BARANG
-                $sheet->setCellValue("C{$currentRow}", $stokKeluar->bahanBaku->satuan);  // UNIT
-                $sheet->setCellValue("D{$currentRow}", $stokKeluar->jumlah);  // QTY
-                $sheet->setCellValue("E{$currentRow}", $stokKeluar->bahanBaku->harga);  // HARGA SATUAN
+                $sheet->setCellValue("A{$currentRow}", $stokMasuk->id);  // NO
+                $sheet->setCellValue("B{$currentRow}", $stokMasuk->bahanBaku->bahan_baku);  // NAMA BARANG
+                $sheet->setCellValue("C{$currentRow}", $stokMasuk->bahanBaku->satuan);  // UNIT
+                $sheet->setCellValue("D{$currentRow}", $stokMasuk->qty);  // QTY
+                $sheet->setCellValue("E{$currentRow}", $stokMasuk->bahanBaku->harga);  // HARGA SATUAN
                 $sheet->setCellValue("F{$currentRow}", $kategori === 'Dapur' ? $totalHarga : 0);  // DAPUR
                 $sheet->setCellValue("G{$currentRow}", $kategori === 'Bar' ? $totalHarga : 0);  // BAR
                 $sheet->setCellValue("H{$currentRow}", $kategori === 'Operasional' ? $totalHarga : 0);  // OPERASIONAL

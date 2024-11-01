@@ -123,7 +123,7 @@
                 var end_date = tahun + '-' + bulan + '-' + new Date(tahun, bulan, 0).getDate(); // Mendapatkan jumlah hari dalam bulan
 
                 // Redirect untuk download
-                window.location.href = "{{ route('stok_masuk.export') }}?start_date=" + start_date + "&end_date=" + end_date;
+                window.location.href = "{{ route('stok_masuk.export') }}?start_date=" + bulan + "&end_date=" + tahun;
             });
         });
 

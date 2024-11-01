@@ -33,6 +33,8 @@ class StokKeluarExport implements FromCollection, WithHeadings, WithMapping, Wit
             ->groupBy(function ($item) {
                 return Carbon::parse($item->tanggal_keluar)->format('d F Y'); // Mengelompokkan berdasarkan tanggal
             });
+
+            //dd($this->stockReports, $this->month, $this->year);
     }
 
     /**
