@@ -29,6 +29,7 @@
             <tr>
                 <th>No</th>
                 <th>Bahan Baku</th>
+                <th>Kategori</th>
                 <th>Stok Awal Bulan</th>
                 <th>Total Rupiah Awal</th>
                 <th>Stok Akhir Bulan</th>
@@ -40,6 +41,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $item->bahanBaku ? $item->bahanBaku->bahan_baku : '-' }}</td>
+                    <td>{{ $item->bahanBaku ? $item->bahanBaku->kategori->nama : '-' }}</td>
                     <td>{{ $item->stok_awal_bulan }} {{ $item->bahanBaku ? $item->bahanBaku->satuan : '-' }}</td>
                     <td>{{ formatRupiah($item->stok_awal_bulan * $item->bahanBaku->harga) }}</td>
                     <td>{{ $item->stok_akhir_bulan }} {{ $item->bahanBaku ? $item->bahanBaku->satuan : '-' }}</td>
