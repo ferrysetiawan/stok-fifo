@@ -29,7 +29,7 @@
             </select>
             <button id="filterButton" class="btn btn-success px-4">Filter</button>
             <button id="downloadButton" class="btn btn-info px-4 ml-2">Download</button>
-            <a href="{{ route('inventory.setStokAkhir') }}" class="btn btn-info px-4 ml-2">Generate Stok</a>
+            {{-- <a href="{{ route('inventory.setStokAkhir') }}" class="btn btn-info px-4 ml-2">Generate Stok</a> --}}
         </div>
     </div>
     <div class="section-body">

@@ -21,9 +21,9 @@
         <li class="{{ request()->is('inventory') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('inventory.index') }}"><i class="fas fa-boxes"></i> <span>Simple Inventory</span></a>
         </li>
-        <li class="{{ request()->is('per-produk*') ? 'active' : '' }}">
+        {{-- <li class="{{ request()->is('per-produk*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('inventory.perProduk') }}"><i class="fas fa-box-open"></i> <span>Per bahan Baku</span></a>
-        </li>
+        </li> --}}
         <li class="dropdown {{ request()->is('detail_inventory*') ? 'active' : '' }}">
             <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-warehouse"></i> <span>Detail Inventory</span></a>
             <ul class="dropdown-menu">

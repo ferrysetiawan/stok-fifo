@@ -28,12 +28,12 @@
             </select>
             <button id="filterButton" class="btn btn-success px-4">Filter</button>
             <button id="downloadButton" class="btn btn-info px-4 ml-2">Download</button>
-            <form action="{{ route('stok-masuk.import') }}" method="POST" enctype="multipart/form-data" class="form-inline">
+            {{-- <form action="{{ route('stok-masuk.import') }}" method="POST" enctype="multipart/form-data" class="form-inline">
                 @csrf
 
                 <input type="file" name="file" required>
                 <button type="submit">Import Stok Masuk</button>
-            </form>
+            </form> --}}
         </div>
     </div>
     <div class="section-body">

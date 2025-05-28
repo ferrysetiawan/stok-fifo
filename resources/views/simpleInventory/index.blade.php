@@ -44,9 +44,7 @@
                                     <tr>
                                         <th>No</th>
                                         <th>Bahan Baku</th>
-                                        <th>Stok awal</th>
                                         <th>Stok Saat ini</th>
-                                        <th>Stok Akhir</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -82,9 +80,7 @@
                         }
                     },
                     { data: 'bahan_baku', name: 'bahan_baku' },
-                    { data: 'stok_awal_bulan', name:'stok_awal_bulan' },
                     { data: 'stok_satuan', name:'stok_satuan' },
-                    { data: 'stok_akhir_bulan', name:'stok_akhir_bulan' },
                 ],
                 createdRow: function (row, data, dataIndex) {
                     $('td:eq(2)', row).addClass('font-weight-bold'); // jumlah column
