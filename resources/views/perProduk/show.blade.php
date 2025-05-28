@@ -17,6 +17,7 @@
                             <div class="col-md-12">
                                 <h5>KARTU STOK LARAS GARDEN RESTO</h5>
                                 <p>Nama Barang: {{ $inventory->bahanBaku->bahan_baku }}</p>
+                                <p>Satuan: {{ $inventory->bahanBaku->satuan }}</p>
                                 <p>Bulan: {{ \Carbon\Carbon::createFromDate($tahun, $bulan)->format('F Y') }}</p>
                                 <p>Sisa Stock Bulan Lalu: {{ $stokAwalBulan }}</p>
                             </div>
