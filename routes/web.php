@@ -29,6 +29,9 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     // ajax bahan baku search
     Route::get('/stok/bahanbaku', [StokMasukController::class, 'bahanBaku'])->name('stok_masuk.bahanbaku');
 
+    Route::post('/import-stok-masuk', [StokMasukController::class, 'import'])->name('stok-masuk.import');
+
+
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('/per-produk', [InventoryController::class, 'perProduk'])->name('inventory.perProduk');
     Route::get('/per-produk/{id}', [InventoryController::class, 'show'])->name('inventory.show');
@@ -44,6 +47,16 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::post('/inventory/update-stok-akhir-bulan', [InventoryController::class, 'updateStokAkhirBulan'])->name('inventory.update-stok-akhir-bulan');
     Route::get('/inventory/download-all-pdf', [InventoryController::class, 'downloadAllPdf'])->name('inventory.downloadAllPdf');
 
+    Route::get('/inventory/set-stok-akhir', [InventoryController::class, 'setStokAkhir'])->name('inventory.setStokAkhir');
+    Route::post('/inventory/store-stok-akhir', [InventoryController::class, 'storeStokAkhir'])->name('inventory.storeStokAkhir');
+
+
+
+    Route::get('/stok/export', [LaporanController::class, 'exportForm'])->name('stok.export.form');
+    Route::get('/stok/export-excel', [LaporanController::class, 'exportExcel'])->name('stok.export.excel');
+
+    Route::get('/stok-pembelian/export', [LaporanController::class, 'exportPembelianForm'])->name('stok.exportpembelian.form');
+    Route::get('/stok-pembelian/export-excel', [LaporanController::class, 'exportStokMasuk'])->name('stok.exportpembelian.excel');
 
 
     Route::resource('stok_keluar', StokKeluarController::class);

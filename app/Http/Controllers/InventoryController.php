@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exports\SimpleInventoryExport;
+use App\Models\BahanBaku;
 use App\Models\Inventory;
 use App\Models\StokKeluar;
 use App\Models\StokMasuk;
+use App\Services\InventoryStockService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ class InventoryController extends Controller
     {
         $today = Carbon::now();
         // dd($today);
-        $isStartOfMonth = $today->day === 1;
+        $isStartOfMonth = $today->day === 27;
         if ($request->ajax()) {
             $data = Inventory::with('bahanBaku')
                 ->get();
@@ -84,7 +86,7 @@ class InventoryController extends Controller
     public function show($id, Request $request)
     {
         // Cari inventory yang sesuai
-        $inventory = Inventory::where('bahan_baku_id',$id)->first();
+        $inventory = Inventory::where('bahan_baku_id', $id)->first();
         // dd($inventory);
         $bulan = $request->input('bulan', now()->month);
         $tahun = $request->input('tahun', now()->year);
@@ -228,11 +230,12 @@ class InventoryController extends Controller
 
     public function updateStokAkhirBulan(Request $request)
     {
-        if ($request->has('isStartOfMonth') && $request->input('isStartOfMonth') === 'true') {
-            $date = now()->subMonth(); // If it's the start of the month, use the previous month
-        } else {
-            $date = now(); // Otherwise, use the current month
-        }
+        // if ($request->has('isStartOfMonth') && $request->input('isStartOfMonth') === 'true') {
+        //     $date = now()->subMonth(); // If it's the start of the month, use the previous month
+        // } else {
+        //     $date = now(); // Otherwise, use the current month
+        // }
+        $date = Carbon::parse('2025-05-01')->subMonth();
 
         Inventory::updateStokAkhirBulan($date);
         return redirect()->route('inventory.history')
@@ -332,5 +335,35 @@ class InventoryController extends Controller
 
         // Kembalikan file PDF untuk diunduh
         return $pdf->download('kartu_stok_semua_bahan_baku.pdf');
+    }
+
+    public function setStokAkhir()
+    {
+        $inventories = Inventory::with('bahanBaku')->get();
+        $bahanBakus = BahanBaku::all();
+        return view('stokKeluar.set_stok_akhir', compact('inventories', 'bahanBakus'));
+    }
+
+    public function storeStokAkhir(Request $request)
+    {
+        $request->validate([
+            'bahan_baku_id' => 'required|exists:bahan_baku,id',
+            'stok_akhir_bulan' => 'required',
+            'bulan' => 'required|date_format:Y-m',
+        ]);
+
+        $inventory = Inventory::firstOrCreate(
+            ['bahan_baku_id' => $request->bahan_baku_id],
+            ['stok' => 0, 'stok_awal_bulan' => 0, 'stok_akhir_bulan' => 0]
+        );
+
+        $inventory->stok_akhir_bulan = $request->stok_akhir_bulan;
+        $inventory->save();
+
+        $bulan = Carbon::createFromFormat('Y-m', $request->bulan);
+
+        InventoryStockService::generateStokKeluarProdukDenganTarget($inventory, $bulan);
+
+        return redirect()->back()->with('success', 'Target stok akhir disimpan & stok keluar digenerate untuk bulan ' . $bulan->format('F Y') . '!');
     }
 }

@@ -12,7 +12,6 @@
 @section('content')
 <section class="section">
     <div class="section-header d-flex justify-content-between">
-        <h1>Halaman Stok Masuk</h1>
         <div class="d-flex">
             <input type="text" id="nama_bahan_baku" class="form-control mr-2" placeholder="Nama Bahan Baku">
             <select id="bulan" class="form-control mr-2">
@@ -29,6 +28,12 @@
             </select>
             <button id="filterButton" class="btn btn-success px-4">Filter</button>
             <button id="downloadButton" class="btn btn-info px-4 ml-2">Download</button>
+            <form action="{{ route('stok-masuk.import') }}" method="POST" enctype="multipart/form-data" class="form-inline">
+                @csrf
+
+                <input type="file" name="file" required>
+                <button type="submit">Import Stok Masuk</button>
+            </form>
         </div>
     </div>
     <div class="section-body">
@@ -49,6 +54,7 @@
                                         <th>No</th>
                                         <th>Bahan Baku</th>
                                         <th>Jumlah</th>
+                                        <th>Sisa</th>
                                         <th>Tanggal Masuk</th>
                                         <th>Action</th>
                                     </tr>
@@ -101,6 +107,7 @@
                     },
                     { data: 'bahan_baku', name: 'bahan_baku_id' },
                     { data: 'qty', name: 'qty' },
+                    { data: 'jumlah', name: 'jumlah' },
                     { data: 'tanggal_masuk', name: 'tanggal_masuk' },
                     {
                         data: null,

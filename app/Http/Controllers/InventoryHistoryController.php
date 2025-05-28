@@ -13,7 +13,7 @@ class InventoryHistoryController extends Controller
     public function index(Request $request)
     {
         $today = Carbon::now();
-        $isStartOfMonth = $today->day === 1;
+        $isStartOfMonth = $today->day === 24;
         $isEndOfMonth = $today->isSameDay($today->endOfMonth());
         $isSpecificDates = $today->day == 1 || $today->isLastOfMonth();
 

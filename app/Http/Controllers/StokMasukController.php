@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\StokMasukExport;
+use App\Imports\StokMasukImport;
 use App\Models\BahanBaku;
 use App\Models\Inventory;
 use App\Models\Kategori;
@@ -234,5 +235,16 @@ class StokMasukController extends Controller
         $fileName = 'stok_masuk_' . $month . '_' . $year . '_' . now()->format('His') . '.xlsx';
 
         return Excel::download(new StokMasukExport($month, $year), $fileName);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,xls',
+        ]);
+
+        Excel::import(new StokMasukImport, $request->file('file'));
+
+        return redirect()->back()->with('success', 'Data stok masuk berhasil diimpor dan stok terupdate!');
     }
 }

@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StokExport;
+use App\Exports\StokPembalianExport;
+use App\Exports\StokPembelianExport;
 use App\Models\BahanBaku;
 use App\Models\StokKeluar;
 use App\Models\StokMasuk;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
 {
@@ -50,5 +54,38 @@ class LaporanController extends Controller
         $bahanBakuList = BahanBaku::whereIn('id', $stokMasuk->pluck('bahan_baku_id'))->get();
 
         return view('laporan.stokKeluar', compact('stokMasuk', 'bulan', 'tahun', 'bahanBakuList'));
+    }
+
+    public function exportForm()
+    {
+        return view('stok.export');
+    }
+
+    public function exportPembelianForm()
+    {
+        return view('stok.export-pembelian');
+    }
+
+    // Proses export Excel
+    public function exportExcel(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        return Excel::download(new StokExport($request->start_date, $request->end_date), 'laporan_stok.xlsx');
+    }
+
+
+
+    public function exportStokMasuk(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        return Excel::download(new StokPembalianExport($request->start_date, $request->end_date), 'laporan_stok_masuk.xlsx');
     }
 }

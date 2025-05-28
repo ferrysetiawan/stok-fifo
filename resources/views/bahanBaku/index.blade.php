@@ -30,6 +30,7 @@
                                 <thead>
                                     <tr>
                                         <th>No</th>
+                                        <th>Id</th>
                                         <th>Bahan Baku</th>
                                         <th>Satuan</th>
                                         <th>Kategori</th>
@@ -332,6 +333,7 @@
                             return meta.row + meta.settings._iDisplayStart + 1; // Menampilkan nomor urut
                         }
                     },
+                    { data: 'id', name: 'id' },
                     { data: 'bahan_baku', name: 'bahan_baku' },
                     { data: 'satuan', name:'satuan' },
                     { data: 'kategori.nama', name: 'kategori_id' },
